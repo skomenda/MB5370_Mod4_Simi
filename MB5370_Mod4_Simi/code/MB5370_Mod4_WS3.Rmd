@@ -1,0 +1,130 @@
+---
+title: "MB5370_Mod4_WS3"
+author: "Simi Komenda"
+date: "2024-05-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Workshop 3 - Data Wrangling 
+tidy data - take tabular data and prepare it for subsequent use
+
+## Install and load tidyverse packages 
+```{r install and load tidyverse}
+library(tidyverse)
+library(dplyr)
+```
+
+## Data Wrangling
+tibble is a data frame in tidyr. 
+%>% is a pipe to better understand what the code is doing. it takes the data left of the pipe and applies the function right of the pipe (|> acheives the same thing)
+
+## Import data
+link to QFISH data: https://qfish.fisheries.qld.gov.au/query/number-caught-by-area-calendar-year-and-species-group/table# . 
+Fix raw data in excel before importing into R (original data is a mess and R doesn't like it)
+```{r QFISH}
+#save QFISH data as CSV and add CSV to data folder and import into R
+QFISH <- read_csv("../data/QFISH.csv")
+QFISH <- mutate_all(QFISH, ~replace(., is.na(.),0)) # replace NA with 0
+```
+
+## Tidy QFISH data 
+tidy the data year by year (runs from 2001-2024 but I only did five years due to time constraints)
+
+2001
+```{r tidy 2001}
+yr2001 <- QFISH |>
+  dplyr::select(Area, starts_with("2001")) #select the year 2001 first 
+
+colnames(yr2001) <- unlist(yr2001[1,]) #removes 1st row  - year
+
+yr2001 <- 
+  yr2001 |>
+  slice(-1) |> # removes repeated catch row 
+    rename(Area = Catch) |> #replace the header catch with area
+  mutate(Year = 2001) #adds the row year and fills it with 2001
+```
+
+2002
+```{r tidy 2002}
+yr2002 <- QFISH |>
+  dplyr::select(Area, starts_with("2002")) #select the year 2002  
+
+colnames(yr2002) <- unlist(yr2002[1,]) #removes the 1st row - year
+yr2002 <- 
+  yr2002 |>
+  slice(-1) |> # removes repeated catch row
+    rename(Area = Catch) |> #renames the cell to area
+  mutate(Year = 2002) #adds the row year and fills it with 2002
+
+```
+
+2003
+```{r tidy 2003}
+yr2003 <- QFISH |>
+  dplyr::select(Area, starts_with("2003")) #select the year 2002  
+
+colnames(yr2003) <- unlist(yr2003[1,]) #removes the 1st row - year
+yr2003 <- 
+  yr2003 |>
+  slice(-1) |> # removes repeated catch row
+    rename(Area = Catch) |> #renames the cell area
+  mutate(Year = 2003) #creates the column year and fills it with 2003
+
+```
+
+2004
+```{r tidy 2004}
+yr2004 <- QFISH |>
+  dplyr::select(Area, starts_with("2004")) #select the year 2004  
+
+colnames(yr2004) <- unlist(yr2004[1,]) #removes the 1st row - year
+yr2004 <- 
+  yr2004 |>
+  slice(-1) |> # removes repeated catch row
+    rename(Area = Catch) |> #renames the cell area
+  mutate(Year = 2004) #creates the column year and fills it with 2004
+```
+
+2005
+```{r tidy 2005}
+yr2005 <- QFISH |>
+  dplyr::select(Area, starts_with("2005")) #select the year 2005  
+
+colnames(yr2005) <- unlist(yr2005[1,]) #removes the 1st row - year
+yr2005 <- 
+  yr2005 |>
+  slice(-1) |> # removes repeated catch row
+    rename(Area = Catch) |> #renames the cell area
+  mutate(Year = 2005) #creates the column year and fills it with 2005
+
+```
+
+## Join the tables together 
+bind the 5 tables on top of each other 
+
+```{r join tables}
+QFISH_1 <- 
+  yr2001 |> 
+  bind_rows(yr2002,yr2003,yr2004,yr2005) |> # joins rows with the same name 
+  
+  #needed to make the y axis continuous - mutate variables from chr to numeric 
+  mutate(Area = as.factor(Area)) |> # convert the area variable to factor (no longer chr)
+  mutate_if(is.character, as.numeric) #converts the other variables to numeric 
+```
+
+## Plot the Data
+create a time series for the QFISH data 
+```{r QFISH plot}
+ggplot(data = QFISH_1) +
+  geom_point(mapping = aes(x = Year, y = Total, color = Area)) + #plots points
+  geom_line(mapping = aes(x = Year, y = Total, color = Area)) + #plots line
+  scale_y_continuous(breaks = seq(0, 180, by = 20)) + #sets scale of y axis 
+  theme_classic() + #theme with no background or grid lines 
+  labs(x = "Calendar Year", y = "Total Catch", #label axis
+       caption = "Figure 3. Total catch (mammals, tutrles, sharks, and others) per calendar year.") #add caption
+```
+
